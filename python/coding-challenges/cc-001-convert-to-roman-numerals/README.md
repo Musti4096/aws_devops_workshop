@@ -79,7 +79,7 @@ Input       Output
 -8          "Not Valid Input !!!"
 4500        "Not Valid Input !!!"
 Ten         "Not Valid Input !!!"
-Exit        "Exiting the program... Good Bye"
+Exit        ""
 ```
 
 
