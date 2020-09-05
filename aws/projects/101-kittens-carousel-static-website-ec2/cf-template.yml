@@ -15,10 +15,14 @@ Resources:
       UserData:
         Fn::Base64:
           !Sub |
+          #! /bin/bash
           sudo yum update -y
           sudo yum install httpd -y
           sudo systemctl start httpd
           sudo systemctl enable httpd
           sudo chmod -R 777 /var/www/html
           cd /var/www/html
-            
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/index.html
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat0.jpg
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat1.jpg
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat2.jpg
