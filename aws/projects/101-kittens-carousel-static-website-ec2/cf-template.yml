@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates an EC2 instance to run static web site with Apache web server
+Resources:
+  MustafaCFInstance: 
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-02354e95b39ca8dec
+      InstanceType: t2.micro
+      KeyName: secure
+      SecurityGroups:
+        - mustafa-cf-sg
+      Tags:
+        - Key: Name
+          Value: Web server of Kittens Carousel
+      UserData:
+        Fn::Base64:
+          !Sub |
+          sudo yum update -y
+          sudo yum install httpd -y
+          sudo systemctl start httpd
+          sudo systemctl enable httpd
+          sudo chmod -R 777 /var/www/html
+          cd /var/www/html
+            
