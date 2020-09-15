@@ -17,17 +17,15 @@ Resources:
           !Sub |
           #! /bin/bash
           sudo yum update -y
-          sudo amazon-linux-extras install nginx1.12
-          sudo systemctl start nginx
-          sudo systemctl enable nginx
-          cd /usr/share/nginx/html
-          sudo chmod -R 777 /usr/share/nginx/html
-          sudo rm index.html
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/100_kitten_carousel_static_website_ec2_ngnix/static-web/index.html
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/100_kitten_carousel_static_website_ec2_ngnix/static-web/cat0.jpg
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/100_kitten_carousel_static_website_ec2_ngnix/static-web/cat1.jpg
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/100_kitten_carousel_static_website_ec2_ngnix/static-web/cat2.jpg
-          sudo systemctl restart nginx
+          sudo yum install python3 -y
+          sudo pip3 install flask -y
+          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/app.py
+          sudo mkdir templates
+          cd templates
+          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/index.html
+          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/result.html
+          cd ..
+          sudo python3 app.py
 
 
           
