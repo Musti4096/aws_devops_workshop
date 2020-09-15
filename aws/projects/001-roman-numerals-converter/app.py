@@ -26,12 +26,13 @@ def romenconvert(num):
 
 @app.route("/", methods = ["POST", "GET"])
 def index():
+    developer_name = "E2426 Mustafa"
     if request.method == "POST":
         number_decimal = request.form.get("number")
         number_roman = romenconvert(number_decimal)
-        return render_template("result.html", number_decimal = number_decimal, number_roman = number_roman )
+        return render_template("result.html", number_decimal = number_decimal, number_roman = number_roman, developer_name = developer_name )
     else:
-        return render_template("index.html")
+        return render_template("index.html", developer_name = developer_name)
 
     
 
