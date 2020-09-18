@@ -19,11 +19,6 @@ def romenconvert(num):
                     num -= i
         return roman
 
-
-# Write a function named `login` which uses `GET` and `POST` methods,
-# and template files named `login.html` and `secure.html` given under `templates` folder
-# and assign to the static route of ('login')
-
 @app.route("/", methods = ["POST", "GET"])
 def index():
     developer_name = "E2426 Mustafa"
@@ -34,9 +29,6 @@ def index():
     else:
         return render_template("index.html", developer_name = developer_name)
 
-    
-
-# Add a statement to run the Flask application which can be reached from any host on port 80.
 
 #    app.run(host='0.0.0.0', port=80)
 if __name__ == "__main__":

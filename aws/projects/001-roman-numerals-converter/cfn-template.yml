@@ -1,14 +1,47 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: This template creates an EC2 instance to run dynamic web site with Flask Web Frame
+Parameters:
+  VpcId:
+    Description: VpcId of my existing Virtual Private Cloud(VPC) 
+    Type: AWS::EC2::VPC::Id
+  InstanceType:
+    Description: WebServer EC2 instance type 
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t1.micro
+      - m1.small
+      - m1.medium
+      - m1.large
+    ConstraintDescription: must be a valid EC2 instance type
+  KeyName:
+    Description: The EC2 Key Pair allow SSH access to the instance 
+    Type: AWS::EC2::KeyPair::KeyName
+Mappings:
+  RegionImageMap:
+    us-east-1:
+      AMI: ami-0c94855ba95c71c99
+    us-east-2:
+      AMI: ami-0603cbe34fd08cb81
+    us-west-1:
+      AMI: ami-0e65ed16c9bf1abc7
+    us-west-2:
+      AMI: ami-0841edc20334f9287
+    eu-west-1:
+      AMI: ami-08a2aed6e0a6f9c7d
 Resources:
   MustafaCFInstance: 
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0c94855ba95c71c99
-      InstanceType: t2.micro
-      KeyName: secure
+      ImageId: !FindInMap 
+        - RegionImageMap
+        - !Ref AWS::Region
+        - AMI 
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
       SecurityGroups:
-        - HTTPandSSH
+        - !Ref MySecurtiyGroup
       Tags:
         - Key: Name
           Value: Flask Web Server Roman Numerals Converter
@@ -16,16 +49,35 @@ Resources:
         Fn::Base64:
           !Sub |
           #! /bin/bash
-          sudo yum update -y
-          sudo yum install python3 -y
-          sudo pip3 install flask -y
-          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/app.py
-          sudo mkdir templates
+          yum update -y
+          yum install python3 -y
+          pip3 install flask
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/app.py
+          mkdir templates
           cd templates
-          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/index.html
-          sudo wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/result.html
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/index.html
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/result.html
           cd ..
-          sudo python3 app.py
-
+          python3 app.py
+  MySecurtiyGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable SSH and HTTP connection from anywhere #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22 
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80 
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 
+Outputs:
+  URL: 
+    Description: The URL of the website
+    Value: !Join 
+      - ''
+      - - 'http://'
+        - !GetAtt MyAppLoadBalancer.DNSName
 
           

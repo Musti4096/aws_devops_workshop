@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  Cloudformation Template for Kitten Carousel Static Website on EC2. This 
+  template deploys Kittens Carousel Static website on Amazon Linux 2 EC2 
+  Instance with custom security group allowing HTTP connections on port 80.
+  Kittens Carousel Sttaic Website is downloaded from GitHub repository, then
+  deployed on Apache Webserver. 
+Resources:
+  WebServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP for Apache Web Server  and SSH for terminal
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  WebServerHost:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: ami-0c94855ba95c71c99
+      InstanceType: t2.micro
+      KeyName: secure
+      SecurityGroupIds:
+        - !Ref WebServerSecurityGroup
+      Tags:
+        - 
+          Key: Name 
+          Value: !Sub Web Server of ${AWS::StackName} Stack 
+      UserData:
+        Fn::Base64:
+          !Sub |
+          #! /bin/bash
+            yum update -y
+            yum install httpd -y
+            systemctl start httpd
+            systemctl enable httpd
+            chmod -R 777 /var/www/html
+            cd /var/www/html
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/index.html
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat0.jpg
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat1.jpg
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/101-kittens-carousel-static-website-ec2/static-web/cat2.jpg 
+Outputs:
+  WebsiteURL: 
+    Value: !Sub 
+      - http://${PublicAdress}
+      - PublicAdress : !GetAtt WebServerHost.PublicDnsName
+    Description: Kitten Carousel Application URL
