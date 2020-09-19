@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  This Templates provides an Auto Scaling Group with Elastic Load Balancer. Every instance has Apache Web Server.
+  We create Target Group in all subnets in us-east-1 region.
+  
+Parameters:
+  VpcId:
+     Description: VpcId of your existing Virutal Private Cloud (VPC) 
+     Type: AWS::EC2::VPC::Id
+  Subnets:
+    Description: The list of SubnetIds in your Virtual Private Cloud (VPC)
+    Type: List<AWS::EC2::Subnet::Id>
+  InstanceType:
+    Description: Web Server Instance Type 
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - "t2.micro"
+      - "t1-micro"
+      - "m1.small"
+      - "m1.medium"
+      - "m1.large"
+    ConstraintDescription: Must be a valid EC2 instance type.
+  KeyName:
+    Description: The  EC2 key pair to allow SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  PolicyTargetValue:
+    Description: Please enter your Target Value that triggers the Auto Scaling
+    Type: String
+    Default: '60' 
+
+Mappings:
+  RegionImageMap:
+    us-east-1:
+      AMI: ami-0c94855ba95c71c99
+    us-east-2:
+      AMI: ami-0603cbe34fd08cb81
+    us-west-1:
+      AMI: ami-0e65ed16c9bf1abc7
+    us-west-2:
+      AMI: ami-0841edc20334f9287
+    eu-west-1:
+      AMI: ami-08a2aed6e0a6f9c7d
+    
+Resources:
+
+  MyCPUPolicy: #ref PolicyTargetValue ekle, 
+    Type: "AWS::AutoScaling::ScalingPolicy"
+    Properties:
+      AutoScalingGroupName: !Ref MyAutoScalingGroup
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: !Ref PolicyTargetValue
+  
+  MyAutoScalingGroup: #completed
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AvailabilityZones: !GetAZs 
+      HealthCheckGracePeriod: 300
+      HealthCheckType: ELB 
+      LaunchConfigurationName: !Ref MyLaunchConfig
+      MaxSize: "3" #required
+      MinSize: "1" #required
+      TargetGroupARNs:
+        - !Ref MyELBTargetGroup
+
+  MyLaunchConfig: #ref keyname ekle, mapping amiid alinacak
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      ImageId: !FindInMap 
+        - RegionImageMap
+        - !Ref AWS::Region 
+        - AMI  #required
+      InstanceType: !Ref InstanceType #required
+      KeyName: !Ref KeyName
+      SecurityGroups:
+        - !Ref MySecurityGroup
+      UserData: !Base64 |
+        #! /bin/bash
+          yum update -y
+          yum install python3 -y
+          pip3 install flask
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/app.py
+          mkdir templates
+          cd templates
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/index.html
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/001-roman-numerals-converter/templates/result.html
+          cd ..
+          python3 app.py
+ 
+  MyElasticLoadBalancer: #ref subnets eklenecek
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      SecurityGroups:
+        - !GetAtt MySecurityGroup.GroupId
+      Subnets: !Ref Subnets
+
+  MyELBListener: #completed
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions: #required
+        - Type: forward
+          TargetGroupArn: !Ref MyELBTargetGroup
+      LoadBalancerArn: !Ref MyElasticLoadBalancer #required
+      Port: 80 #required
+      Protocol: HTTP #required
+
+  MyELBTargetGroup: #vpcid eklenecek
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /
+      HealthCheckPort: traffic-port
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref VpcId
+  
+
+  MySecurityGroup: #completed
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP and SSH connection from anywhere
+      SecurityGroupIngress:
+        - IpProtocol: tcp #http
+          FromPort: 80 
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp #ssh
+          FromPort: 22 
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+    
+Outputs:
+  URL:
+    Description: The URL of the website
+    Value: !Join 
+      - ''
+      - - 'http://'
+        - !GetAtt MyElasticLoadBalancer.DNSName
