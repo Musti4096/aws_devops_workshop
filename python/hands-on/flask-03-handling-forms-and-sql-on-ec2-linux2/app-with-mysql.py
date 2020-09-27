@@ -24,7 +24,9 @@ CREATE TABLE users (
   email varchar(50),
   PRIMARY KEY (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-"""  # Bu kullanım aslında sqlite ile aynı şeyi ifade etmekle birlikte bazı mysql convention'dan dolayı küçük farklılıklar ouşmaktadır. Bunlardan biri varchar olarak 50 dememiz gerekiyor burada. Ayrıca en sonda ENGINE tipi belirtmemiz gerekmektedir.
+"""  # Bu kullanım aslında sqlite ile aynı şeyi ifade etmekle birlikte bazı mysql convention'dan 
+#dolayı küçük farklılıklar ouşmaktadır. Bunlardan biri varchar olarak 50 dememiz gerekiyor burada.
+#  Ayrıca en sonda ENGINE tipi belirtmemiz gerekmektedir.
 data = """
 INSERT INTO clarusway.users 
 VALUES 
