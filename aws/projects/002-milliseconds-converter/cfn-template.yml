@@ -25,9 +25,9 @@ Parameters:
     Description: The EC2 Key Pair allow SSH access to the instance  
     Type: AWS::EC2::KeyPair::KeyName
   Subnets:
-    Description: The Subnet Id in our VPC  
-    Type: AWS::EC2::Subnet::Id
-
+    Description: Choos Subnets
+    Type: List<AWS::EC2::Subnet::Id>
+  
 Mappings:
   RegionImageMap:
     us-east-1:
@@ -46,10 +46,10 @@ Resources:
     Properties:
       AvailabilityZones: !GetAZs 
       Cooldown: 300
-      DesiredCapacity: 1
+      DesiredCapacity: 2
       HealthCheckGracePeriod: 300
       HealthCheckType: ELB 
-      LaunchConfigurationName: myLaunchConfiguration
+      LaunchConfigurationName: !Ref myLaunchConfiguration
       MaxSize: "3" #required
       MinSize: "1" #required
       TargetGroupARNs:
@@ -86,7 +86,7 @@ Resources:
       AutoScalingGroupName: !Ref myAutoScalingGroup #required
       PolicyType: TargetTrackingScaling
       TargetTrackingConfiguration:
-        PredefineMetricSpecification:
+        PredefinedMetricSpecification:
           PredefinedMetricType: ASGAverageCPUUtilization
         TargetValue : !Ref PolicyTargetValue
 
@@ -95,7 +95,7 @@ Resources:
     Properties:
       SecurityGroups:
         - !GetAtt mySecurityGroup.GroupId
-      Subnets: !Ref Subnets 
+      Subnets: !Ref Subnets
 
   myALBListener: #completed
     Type: "AWS::ElasticLoadBalancingV2::Listener"
@@ -110,9 +110,6 @@ Resources:
   myALBTargetGroup: #completed
     Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
     Properties:
-      HealthCheckIntervalSeconds: 30
-      HealthCheckPort: HTTP 
-      HealthCheckProtocol: TCP 
       HealthyThresholdCount: 5
       Port: 80
       Protocol: HTTP 
@@ -132,6 +129,7 @@ Resources:
           FromPort: 80 
           ToPort: 80
           CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
 
 Outputs:
   URL:
