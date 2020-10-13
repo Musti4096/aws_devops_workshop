@@ -1,0 +1,178 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  This is my Phonebook Application on Python template. This project contains Autoscaling group with Elastic Load Balancer and RDS.
+  It has two security group for web server and RDS, which enables 22 SSH, 80 HTTP and 3306 MYSQL ports from anywhere available.
+Parameters:
+  VpcId:
+    Description: VpcId of my existing Virtual Private Cloud (VPC) 
+    Type: AWS::EC2::VPC::Id
+  PolicyTargetValue:
+    Description: Please enter your target value that triggers the AutoScalingGroup
+    Type: String 
+    Default: '60'
+  InstanceType:
+    Description: WebServer EC2 instance Type  
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+      - t1.micro
+      - m1.small
+      - m1-medium
+      - m1.large
+    ConstraintDescription: must be a valid EC2 instance type
+  KeyName:
+    Description: The EC2 Key Pair allow SSH access to the instance  
+    Type: AWS::EC2::KeyPair::KeyName
+  Subnets:
+    Description: Choose Subnets
+    Type: List<AWS::EC2::Subnet::Id>
+  
+Mappings:
+  RegionImageMap:
+    us-east-1:
+      AMI: ami-0c94855ba95c71c99
+    us-east-2:
+      AMI: ami-0603cbe34fd08cb81
+    us-west-1:
+      AMI: ami-0e65ed16c9bf1abc7
+    us-west-2:
+      AMI: ami-0841edc20334f9287
+    eu-west-1:
+      AMI: ami-08a2aed6e0a6f9c7d
+Resources:
+
+  myRDSDatabase:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: "20"
+      AllowMajorVersionUpgrade: false
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: 0
+      DBInstanceClass: db.t2.micro #required
+      DBInstanceIdentifier: RDSDataBase
+      DBName: MySQLDB
+      DBSubnetGroupName: !Ref Subnets
+      Engine: mysql
+      EngineVersion: "8.0.19"
+      MasterUserPassword: "Aa123456"
+      MasterUsername: "admin"
+      Port: "3306"
+      PreferredBackupWindow: "03:00-03:30"
+      PreferredMaintenanceWindow: "mon:02:00-mon:02:30"
+      PubliclyAccessible: true
+      UseDefaultProcessorFeatures: Boolean
+      VPCSecurityGroups:
+        - !Ref myRDSSecurityGroup
+
+  myAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AvailabilityZones: !GetAZs 
+      Cooldown: 300
+      DesiredCapacity: 2
+      HealthCheckGracePeriod: 300
+      HealthCheckType: ELB 
+      LaunchConfigurationName: !Ref myLaunchConfiguration
+      MaxSize: "3" #required
+      MinSize: "1" #required
+      TargetGroupARNs:
+      - !Ref myALBTargetGroup
+ 
+  myLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      ImageId: !FindInMap  #required 
+        - RegionImageMap
+        - !Ref AWS::Region 
+        - AMI 
+      InstanceType: !Ref InstanceType #required
+      KeyName: !Ref KeyName 
+      SecurityGroups:
+        - !Ref mySecurityGroup
+      UserData: !Base64 |
+          #! /bin/bash
+          yum update -y
+          yum install python3 -y 
+          pip3 install flask
+          cd /home/ec2-user
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/app.py
+          mkdir templates
+          cd templates
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/templates/index.html
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/templates/result.html
+          cd ..
+          python3 app.py
+
+  MyCPUPolicy: #completed
+    Type: "AWS::AutoScaling::ScalingPolicy"
+    Properties:
+      AutoScalingGroupName: !Ref myAutoScalingGroup #required
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue : !Ref PolicyTargetValue
+
+  myAppLoadBalancer:
+    Type: "AWS::ElasticLoadBalancingV2::LoadBalancer"
+    Properties:
+      SecurityGroups:
+        - !GetAtt mySecurityGroup.GroupId
+      Subnets: !Ref Subnets
+
+  myALBListener: #completed
+    Type: "AWS::ElasticLoadBalancingV2::Listener"
+    Properties:
+      DefaultActions: #required
+        - Type: forward
+          TargetGroupArn: !Ref myALBTargetGroup
+      LoadBalancerArn: !Ref myAppLoadBalancer #required
+      Port: 80 #required
+      Protocol: HTTP #required
+
+  myALBTargetGroup: #completed
+    Type: "AWS::ElasticLoadBalancingV2::TargetGroup"
+    Properties:
+      HealthyThresholdCount: 5
+      Port: 80
+      Protocol: HTTP 
+      UnhealthyThresholdCount: 2
+      VpcId: !Ref VpcId
+
+  mySecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enables SSH and HTTP ports from anywhere #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22 
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80 
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+  
+  myRDSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enables MYSQL ports from anywhere #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306 
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+
+Outputs:
+  URL:
+    Description: The URL of the website
+    Value: !Join 
+      - ""
+      - - "http://"
+        - !GetAtt myAppLoadBalancer.DNSName
+  
+  DBEndPoint:
+    !GetAtt myRDSDatabase.Endpoint.Address
