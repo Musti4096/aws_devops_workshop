@@ -44,6 +44,7 @@ Resources:
 
   myRDSDatabase:
     Type: "AWS::RDS::DBInstance"
+    DeletionPolicy: Delete
     Properties:
       AllocatedStorage: "20"
       AllowMajorVersionUpgrade: false
@@ -51,8 +52,7 @@ Resources:
       BackupRetentionPeriod: 0
       DBInstanceClass: db.t2.micro #required
       DBInstanceIdentifier: RDSDataBase
-      DBName: MySQLDB
-      DBSubnetGroupName: !Ref Subnets
+      DBName: phonebook
       Engine: mysql
       EngineVersion: "8.0.19"
       MasterUserPassword: "Aa123456"
@@ -61,7 +61,6 @@ Resources:
       PreferredBackupWindow: "03:00-03:30"
       PreferredMaintenanceWindow: "mon:02:00-mon:02:30"
       PubliclyAccessible: true
-      UseDefaultProcessorFeatures: Boolean
       VPCSecurityGroups:
         - !Ref myRDSSecurityGroup
 
@@ -90,19 +89,26 @@ Resources:
       KeyName: !Ref KeyName 
       SecurityGroups:
         - !Ref mySecurityGroup
-      UserData: !Base64 |
-          #! /bin/bash
-          yum update -y
-          yum install python3 -y 
-          pip3 install flask
-          cd /home/ec2-user
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/app.py
-          mkdir templates
-          cd templates
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/templates/index.html
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/002-milliseconds-converter/templates/result.html
-          cd ..
-          python3 app.py
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            |
+            #! /bin/bash
+            yum update -y
+            yum install python3 -y 
+            pip3 install flask
+            pip3 install flask_sqlalchemy
+            pip3 install flask_mysql
+            cd /home/ec2-user
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/004-phonebook-web-application/phonebook-app.py
+            mkdir templates
+            cd templates
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/004-phonebook-web-application/templates/add-update.html
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/004-phonebook-web-application/templates/delete.html
+            wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/aws/projects/004-phonebook-web-application/templates/index.html
+            cd ..
+            echo "${myRDSDatabase.Endpoint.Address}" >> dbserver.endpoint
+            python3 phonebook-app.py
 
   MyCPUPolicy: #completed
     Type: "AWS::AutoScaling::ScalingPolicy"
@@ -153,6 +159,10 @@ Resources:
           FromPort: 80 
           ToPort: 80
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3306 
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
       VpcId: !Ref VpcId
   
   myRDSSecurityGroup:
@@ -175,4 +185,5 @@ Outputs:
         - !GetAtt myAppLoadBalancer.DNSName
   
   DBEndPoint:
-    !GetAtt myRDSDatabase.Endpoint.Address
+    Description: The end point of the RDS
+    Value : !GetAtt myRDSDatabase.Endpoint.Address

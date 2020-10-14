@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: This template creates an EC2 instance which enables SSH connection. 
+
+Resources:
+  LogicalID:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: String
+      AllowMajorVersionUpgrade: Boolean
+      AssociatedRoles:
+        - DBInstanceRole
+      AutoMinorVersionUpgrade: Boolean
+      AvailabilityZone: String
+      BackupRetentionPeriod: Integer
+      CACertificateIdentifier: String
+      CharacterSetName: String
+      CopyTagsToSnapshot: Boolean
+      DBClusterIdentifier: String
+      DBInstanceClass: String #required
+      DBInstanceIdentifier: String
+      DBName: String
+      DBParameterGroupName: String
+      DBSecurityGroups:
+        - String
+      DBSnapshotIdentifier: String
+      DBSubnetGroupName: String
+      DeleteAutomatedBackups: Boolean
+      DeletionProtection: Boolean
+      Domain: String
+      DomainIAMRoleName: String
+      EnableCloudwatchLogsExports:
+        - String
+      EnableIAMDatabaseAuthentication: Boolean
+      EnablePerformanceInsights: Boolean
+      Engine: String
+      EngineVersion: String
+      Iops: Integer
+      KmsKeyId: String
+      LicenseModel: String
+      MasterUserPassword: String
+      MasterUsername: String
+      MaxAllocatedStorage: Integer
+      MonitoringInterval: Integer
+      MonitoringRoleArn: String
+      MultiAZ: Boolean
+      OptionGroupName: String
+      PerformanceInsightsKMSKeyId: String
+      PerformanceInsightsRetentionPeriod: Integer
+      Port: String
+      PreferredBackupWindow: String
+      PreferredMaintenanceWindow: String
+      ProcessorFeatures:
+        - ProcessorFeature
+      PromotionTier: Integer
+      PubliclyAccessible: Boolean
+      SourceDBInstanceIdentifier: String
+      SourceRegion: String
+      StorageEncrypted: Boolean
+      StorageType: String
+      Tags:
+        - Tag
+      Timezone: String
+      UseDefaultProcessorFeatures: Boolean
+      VPCSecurityGroups:
+        - String
+  rds
+
+  MustafaCFInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0c94855ba95c71c99
+      InstanceType: t2.micro
+      KeyName: secure
+      SecurityGroups:
+        - HTTP-SSH
+      Tags:
+        - Key: Name
+          Value: mustafa-cf-instance
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            | 
+            #!/bin/bash
+            yum update -y
+            cd /home/ec2-user
+            touch publicdnsname.txt
+            echo "${MustafaCFInstance.PublicDnsName}" >> publicdnsname.txt

@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: | 
+Cloudformation template for milliseconds converter application. This app runs
+on application load balancer. In addition, it is observed by Autoscaling group.
+              
+Parameters:
+  
+Resources:
+  ALBSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP for ALB #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+  
+  WebServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP for App from ALB #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          SourceSecurityGroupId: !GetAtt ALBSecurityGroup.GroupId
+  
+  WebServerLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      ImageId: ami-0947d2ba12ee1ff75 #required
+      InstanceId: String
+      InstanceType: t2.micro #required
+      KeyName: secure
+      SecurityGroups:
+        - !GetAtt WebServerSecurityGroup.GroupId
+      TagSpecifications:
+        - ReourceType: Instance 
+          Tag: 
+            - Key: Name
+              Value: !Sub Web Server of ${AWS::StackName} 
+      UserData:
+        Fn::Base64:
+          !Sub | 
+            #! /bin/bash
+            yum update -y
+            yum install python3 -y
+            pip3 install flask
+            TOKEN="xxxxxxxxxxx"
+            FOLDER="xxxxxxxxxxxxxxxx"
+            curl -s --create-dirs -o "/home/ec2-user/templates/index.html" -L "$FOLDER"templates/index.html
+            curl -s --create-dirs -o "/home/ec2-user/templates/result.html" -L "$FOLDER"templates/result.html
+            curl -s --create-dirs -o "/home/ec2-user/app.py" -L "$FOLDER"app.py
+            python3 /home/ec2-user/app.py
+            
+
+   
+  
+Outputs:
