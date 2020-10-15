@@ -41,7 +41,7 @@ Resources:
             yum update -y
             yum install python3 -y
             pip3 install flask
-            TOKEN="9ec9b194e660aec759c31cff5c6857faf23b688e"
+            TOKEN="xxxxxxxxxxxxxxxxxxxxxxxxxxx"
             FOLDER="https://$TOKEN@raw.githubusercontent.com/Musti4096/private/main/"
             curl -s --create-dirs -o "/home/ec2-user/templates/index.html" -L "$FOLDER"templates/index.html
             curl -s --create-dirs -o "/home/ec2-user/templates/result.html" -L "$FOLDER"templates/result.html
