@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  This Cloudformation Template creates five Compose enabled Docker Machines on EC2 Instances
+  which are ready for Docker Swarm operations, using the AMI of Clarusway (ami-038b5c5d2ad6a5090). 
+  The AMI of Clarusway Compose enabled Docker Machine (clarusway-docker-machine-with-compose-amazon-linux-2)
+  is published on North Virginia Region for educational purposes. 
+  Docker Machines will run on Amazon Linux 2 with custom security group 
+  allowing SSH (22), HTTP (80) and TCP(2377, 8080) connections from anywhere.
+  User needs to select appropriate key name when launching the template.
+
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be one of the existing EC2 KeyPair
+
+Resources:
+  DockerMachinesSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP for Docker Machines
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 2377
+          ToPort: 2377
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+  DockerMachine1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-038b5c5d2ad6a5090
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt DockerMachinesSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Docker Machine 1st of ${AWS::StackName}
+  DockerMachine2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-038b5c5d2ad6a5090
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt DockerMachinesSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Docker Machine 2nd of ${AWS::StackName} 
+  DockerMachine3:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-038b5c5d2ad6a5090
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt DockerMachinesSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Docker Machine 3rd of ${AWS::StackName} 
+  DockerMachine4:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-038b5c5d2ad6a5090
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt DockerMachinesSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Docker Machine 4th of ${AWS::StackName} 
+  DockerMachine5:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-038b5c5d2ad6a5090
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt DockerMachinesSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Docker Machine 5th of ${AWS::StackName} 
+Outputs:
+  1stDockerMachineDNSName:
+    Description: Docker Machine 1st DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt DockerMachine1.PublicDnsName
+  2ndDockerMachineDNSName:
+    Description: Docker Machine 2nd DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt DockerMachine2.PublicDnsName
+  3rdDockerMachineDNSName:
+    Description: Docker Machine 3rd DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt DockerMachine3.PublicDnsName
+  4thDockerMachineDNSName:
+    Description: Docker Machine 4th DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt DockerMachine4.PublicDnsName
+  5thDockerMachineDNSName:
+    Description: Docker Machine 5th DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt DockerMachine5.PublicDnsName
+  
