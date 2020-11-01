@@ -48,7 +48,7 @@ Resources:
           wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/devops/projects/201-dockerization-bookstore-api-on-python-flask-mysql/Dockerfile
           wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/devops/projects/201-dockerization-bookstore-api-on-python-flask-mysql/docker-compose.yml
           wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/devops/projects/201-dockerization-bookstore-api-on-python-flask-mysql/requirements.txt
-          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/devops/projects/201-dockerization-bookstore-api-on-python-flask-mysql/bookstore.api.py
+          wget https://raw.githubusercontent.com/Musti4096/aws_devops_workshop/master/devops/projects/201-dockerization-bookstore-api-on-python-flask-mysql/bookstore-api.py
           docker-compose up
           
 Outputs: 
