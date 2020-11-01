@@ -1,13 +1,5 @@
 version: "3"
 services:
-  app:
-    build: .
-    ports:
-      - "80:80"
-    depends_on: 
-      - database
-    networks: 
-      - clarusnet
   database:
     image: mysql:5.7 
     environment: 
@@ -16,6 +8,15 @@ services:
       MYSQL_USER: clarusway
       MYSQL_PASSWORD: Clarusway_1
     networks:
+      - clarusnet
+  app:
+    build: .
+    restart: always
+    ports:
+      - "80:80"
+    depends_on: 
+      - database
+    networks: 
       - clarusnet
 networks:
     clarusnet:

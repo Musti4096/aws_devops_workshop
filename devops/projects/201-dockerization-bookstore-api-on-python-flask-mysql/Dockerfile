@@ -1,10 +1,6 @@
-FROM python:3.7-alpine
-WORKDIR /code
-ENV FLASK_APP bookstore-api.py
-ENV FLASK_RUN_HOST 0.0.0.0
-RUN apk add --no-cache gcc musl-dev linux-headers
-COPY requirements.txt requirements.txt
+FROM python:alpine
+COPY . /app
+WORKDIR /app
 RUN pip install -r requirements.txt
 EXPOSE 80
-COPY . .
-CMD ["flask", "run"]
+CMD python ./bookstore-api.py 
