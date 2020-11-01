@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  CloudFormation Template for Bookstore Web API Application. This template
+  creates a RESTful web service with Flask using Dockerfile and Docker Compose on
+  AWS Elastic Compute Cloud (EC2) Instance using AWS Cloudformation Service..
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must one of the existing EC2 KeyPair
+
+Resources:
+  WebServerSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Enable HTTP for Flask Web Server #required
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp #required
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  WebServerHost:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: ami-0947d2ba12ee1ff75
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds: 
+        - !Ref WebServerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub Web Server of ${AWS::StackName} 
+      UserData: !Base64 |
+          #! /bin/bash
+          yum update -y
+          amazon-linux-extras install docker -y
+          service docker start
+          usermod -a -G docker ec2-user
+          newgrp docker
+          curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          cd/home/ec2-user
+          
+          
+          
+          yum install python3 -y
+          pip3 install flask
+          cd /home/ec2-user
+          wget https://raw.githubusercontent.com/serdarcw/clarusway-python-workshop/master/001-project-roman-numerals-converter/app.py
+          mkdir templates
+          cd templates
+          wget https://raw.githubusercontent.com/serdarcw/clarusway-python-workshop/master/001-project-roman-numerals-converter/templates/index.html
+          wget https://raw.githubusercontent.com/serdarcw/clarusway-python-workshop/master/001-project-roman-numerals-converter/templates/result.html
+          cd ..
+          python3 app.py
+
+Outputs: 
+  WebsiteURL:
+    Value: !Sub 
+      - http://${PublicAddress}
+      - PublicAddress: !GetAtt WebServerHost.PublicDnsName
+    Description: Roman Numerals Converter Application URL
