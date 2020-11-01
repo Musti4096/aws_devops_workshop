@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  This Cloudformation Template creates a Jenkins Server (based on BlueOcean Docker Image)
+  using the AMI of Clarusway (ami-0644c22f90412d908) on Docker machine on EC2 Instance. 
+  The AMI of Clarusway Jenkins Server is published on North Virginia Region for educational purposes.
+  Jenkins Server will run on Amazon Linux 2 EC2 Instance with custom security group 
+  allowing SSH (22) and HTTP (80, 8080) connections from anywhere.
+  Jenkins Server is configured with admin user `call-jenkins` and password `Call-jenkins1234`.
+
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must one of the existing EC2 KeyPair
+
+Resources:
+  JenkinsServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP for Jenkins Server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  JenkinsServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0644c22f90412d908
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt JenkinsServerSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub Jenkins Server of ${AWS::StackName}   
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          docker container run --name jenkins-docker --rm --detach \
+          --privileged --network jenkins --network-alias docker \
+          --env DOCKER_TLS_CERTDIR=/certs \
+          --volume jenkins-docker-certs:/certs/client \
+          --volume jenkins-data:/var/jenkins_home \
+          --volume "$HOME":/home docker:dind
+          docker container run --name jenkins --rm --detach \
+          --network jenkins --env DOCKER_HOST=tcp://docker:2376 \
+          --env DOCKER_CERT_PATH=/certs/client --env DOCKER_TLS_VERIFY=1 \
+          --volume jenkins-data:/var/jenkins_home \
+          --volume jenkins-docker-certs:/certs/client:ro \
+          --volume "$HOME":/home --publish 8080:8080 jenkinsci/blueocean
+Outputs:
+  JenkinsDNS:
+    Description: Jenkins Server DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName
+  JenkinsURL:
+    Description: Jenkins Server URL
+    Value: !Sub 
+      - http://${PublicAddress}:8080
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName

@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  This Cloudformation Template creates a Jenkins Server in North Virginia Region.
+  Jenkins Server will run on Amazon Linux 2 EC2 Instance with custom security group 
+  allowing SSH (22) and HTTP (80, 8080) connections from anywhere.
+
+
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must one of the existing EC2 KeyPair
+
+Resources:
+  JenkinsServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP for Jenkins Server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  JenkinsServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0644c22f90412d908
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt JenkinsServerSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub joe-blue-native-${AWS::StackName}   
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          yum update -y
+          amazon-linux-extras install java-openjdk11 -y
+          wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+          rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+          yum install jenkins -y
+          systemctl start jenkins
+          systemctl enable jenkins
+          yum install git -y
+
+Outputs:
+  JenkinsDNS:
+    Description: Jenkins Server DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName
+  JenkinsURL:
+    Description: Jenkins Server URL
+    Value: !Sub 
+      - http://${PublicAddress}:8080
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName
