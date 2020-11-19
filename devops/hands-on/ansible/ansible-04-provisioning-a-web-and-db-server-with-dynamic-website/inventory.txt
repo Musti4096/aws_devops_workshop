@@ -1,0 +1,3 @@
+[servers]
+db_server  ansible_host=<DB-SERVER-IP>  ansible_ssh_private_key_file=~/<PATH-TO-YOUR-PEM-FILE> ansible_user=ec2-user
+web_server ansible_host=<WEB-SERVER-IP> ansible_ssh_private_key_file=~/<PATH-TO-YOUR-PEM-FILE> ansible_user=ec2-user

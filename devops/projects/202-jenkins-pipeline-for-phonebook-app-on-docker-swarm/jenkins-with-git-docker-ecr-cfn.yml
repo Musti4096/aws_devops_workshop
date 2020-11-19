@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  This Cloudformation Template creates a Jenkins Server on EC2 Instance.
+  Jenkins Server is enabled with Git, Docker and Docker Compose 
+  and configured to work with EC2 Connect CLI, AWS ECR and Cloudformation 
+  using using IAM role.
+  Jenkins Server is also upgraded to AWS CLI Version 2 to enable ECR commands.
+  Jenkins Server will run on Amazon Linux 2 EC2 Instance with
+  custom security group allowing HTTP(80, 8080) and SSH (22) connections from anywhere.
+
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must one of the existing EC2 KeyPair
+Resources:
+  InstanceConnectPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      PolicyDocument: #required
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - ec2-instance-connect:SendSSHPublicKey
+            Resource:
+              - !Sub arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*
+            Condition: {"StringEquals": {"ec2:osuser": ["ec2-user", "ubuntu"]}}
+          - Effect: Allow
+            Action:
+              - ec2:DescribeInstances
+            Resource: "*"
+  EC2InstanceConnect:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - !Ref InstanceConnectPolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  EC2ConnectProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles: #required
+        - !Ref EC2InstanceConnect
+  JenkinsServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP for Jenkins Server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  JenkinsServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-02354e95b39ca8dec
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref EC2ConnectProfile
+      SecurityGroupIds:
+        - !GetAtt JenkinsServerSecurityGroup.GroupId
+      Tags:                
+        - Key: Name
+          Value: !Sub Jenkins Server of ${AWS::StackName}
+        - Key: server
+          Value: jenkins
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          yum update -y
+          hostnamectl set-hostname jenkins-server
+          yum install git -y
+          amazon-linux-extras install java-openjdk11 -y
+          wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
+          rpm --import https://pkg.jenkins.io/redhat/jenkins.io.key
+          yum install jenkins -y
+          systemctl start jenkins
+          systemctl enable jenkins
+          amazon-linux-extras install docker -y
+          systemctl start docker
+          systemctl enable docker
+          usermod -a -G docker ec2-user
+          usermod -a -G docker jenkins
+          cp /lib/systemd/system/docker.service /lib/systemd/system/docker.service.bak
+          sed -i 's/^ExecStart=.*/ExecStart=\/usr\/bin\/dockerd -H tcp:\/\/127.0.0.1:2375 -H unix:\/\/\/var\/run\/docker.sock/g' /lib/systemd/system/docker.service
+          systemctl daemon-reload
+          systemctl restart docker
+          systemctl restart jenkins
+          curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" \
+          -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+          yum install python3 -y
+          pip3 install ec2instanceconnectcli
+          yum install amazon-ecr-credential-helper -y
+          mkdir -p /home/jenkins/.docker
+          cd /home/jenkins/.docker
+          echo '{"credsStore": "ecr-login"}' > config.json
+          
+Outputs:
+  JenkinsDNS:
+    Description: Jenkins Server DNS Name 
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName
+  JenkinsURL:
+    Description: Jenkins Server URL
+    Value: !Sub 
+      - http://${PublicAddress}:8080
+      - PublicAddress: !GetAtt JenkinsServer.PublicDnsName

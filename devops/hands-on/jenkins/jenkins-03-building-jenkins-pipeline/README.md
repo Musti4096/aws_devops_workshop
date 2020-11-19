@@ -350,6 +350,24 @@ pipeline {
 }
 ```
 
+- For native structured Jenkins Server
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('run') {
+            steps {
+                echo 'Clarusway_Way to Reinvent Yourself'
+                sh 'python --version'
+                sh 'python pipeline.py'
+            }
+        }
+    }
+}
+```
+
+
 - Commit and push the changes to the remote repo on GitHub.
 
 ```bash
@@ -386,6 +404,8 @@ public class Hello {
 - Since the Jenkins Server is running on Java platform, we can leverage from the already available java environment.
 
 - Update the `Jenkinsfile` with the following pipeline script, and explain the changes.
+
+- `yum install java-devel` to install java dependencies.
 
 ```groovy
 pipeline {
@@ -495,6 +515,37 @@ pipeline {
             steps {
                 sh 'chmod +x deliver-script.sh'
                 sh './deliver-script.sh'
+            }
+        }
+    }
+}
+```
+
+- For native structured Jenkins Server
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn -f hello-app/pom.xml -B -DskipTests clean package'
+            }
+            post {
+                success {
+                    echo "Now Archiving the Artifacts....."
+                    archiveArtifacts artifacts: '**/*.jar'
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'mvn -f hello-app/pom.xml test'
+            }
+            post {
+                always {
+                    junit 'hello-app/target/surefire-reports/*.xml'
+                }
             }
         }
     }

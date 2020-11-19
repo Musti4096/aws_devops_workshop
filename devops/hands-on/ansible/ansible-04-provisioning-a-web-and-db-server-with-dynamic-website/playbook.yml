@@ -1,0 +1,124 @@
+- name: db configuration
+  hosts: db_server
+  tasks:
+    - name: install mariadb
+      become: yes
+      yum:
+        name: 
+            - mariadb-server
+            - python3-PyMySQL
+        state: latest
+
+    - name: copy the sql script
+      copy:
+        src: ~/db-load-script.sql
+        dest: ~/
+      
+    - name: start mariadb
+      become: yes  # you can also try with sudo systemctl...
+      command: systemctl start mariadb
+
+    - name: enable mariadb
+      become: yes
+      systemd: 
+        name: mariadb
+        enabled: true
+
+    - name: Create password for the root user
+      mysql_user:
+        login_password: ''
+        login_user: root
+        name: root
+        password: "clarus1234"
+    
+    - name: copy the .my.cnf file
+      copy:
+        src: ~/.my.cnf
+        dest: ~/
+          
+    - name: Create database user with name 'matt' and password 'clarus1234' with all database privileges
+      mysql_user:
+        name: matt
+        password: "clarus1234"
+        login_user: "root"
+        login_password: "clarus1234"
+        priv: '*.*:ALL,GRANT'
+        state: present
+        host: "54.196.164.132"  # web server's ip address...
+
+    - name: Create database schema
+      mysql_db:
+        name: ecomdb
+        login_user: root
+        login_password: "clarus1234"
+        state: present
+
+    - name: check if the database has the table
+      shell: |
+        echo "USE ecomdb; show tables like 'products'; " | mysql
+      register: resultOfShowTables
+    
+    - name: DEBUG
+      debug:
+        var: resultOfShowTables
+
+    - name: Import database schema
+      mysql_db:
+        name: ecomdb
+        state: import  # when the state value is import, the module is not idempotent.
+        target: ~/db-load-script.sql
+      when: resultOfShowTables.stdout == ""
+    
+    - name: restart mariadb
+      become: yes
+      service: 
+        name: mariadb
+        state: restarted
+        
+- name: web server configuration
+  hosts: web_server
+  become: yes
+  tasks: 
+    - name: install the latest version of Apache
+      package:
+        name: 
+          - git
+          - httpd
+          - php
+          - php-mysqlnd
+        state: latest
+
+    - name: start the server and enable it
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: clone the repo of the website
+      shell: |
+        if [ -z "$(ls -al /var/www/html | grep .git)" ]; then
+          git clone https://github.com/kodekloudhub/learning-app-ecommerce.git /var/www/html/
+          echo "ok"
+        else
+          echo "already cloned..."
+        fi
+      register: result
+      
+    - name: DEBUG
+      debug:
+        var: result
+
+    - name: Replace a default entry with our own
+      lineinfile:
+        path: /var/www/html/index.php
+        regexp: '172\.20\.1\.101'
+        line: "$link = mysqli_connect('54.242.35.132', 'matt', 'clarus1234', 'ecomdb');"  # db server's ip address will be used...
+      when: not result.stdout == "already cloned..."
+
+    - selinux:
+        state: disabled
+
+    - name: Restart service httpd
+      service:
+        name: httpd
+        state: restarted

@@ -16,9 +16,11 @@ At the end of the this hands-on training, students will be able to;
 
 - Part 1 - Install Jenkins on Docker using Cloudformation Template
 
-- Part 2 - Getting familiar with Jenkins Dashboard
+- Part 2 - Install Jenkins Natively using Cloudformation Template
 
-- Part 3 - Creating First Jenkins Job
+- Part 3 - Getting familiar with Jenkins Dashboard
+
+- Part 4 - Creating First Jenkins Job
 
 ## Part 1 - Install Jenkins on Docker using Cloudformation Template
 
@@ -52,7 +54,26 @@ docker logs jenkins
 
 - Check the URL, then save and finish the installation.
 
-## Part 2 - Getting familiar with Jenkins Dashboard
+## Part 2 - Install Jenkins Natively using Cloudformation Template
+
+- Launch and configure a Jenkins Server on Amazon Linux 2 AMI with security group allowing SSH (port 22) and HTTP (ports 80, 8080) connections using the [Cloudformation Template for Jenkins Native Installation](./jenkins-native-install-cfn-template.yml).
+
+- Connect to your instance with SSH.
+
+```bash
+ssh -i .ssh/call-training.pem ec2-user@ec2-3-133-106-98.us-east-2.compute.amazonaws.com
+```
+
+- Get the administrator password from `/var/lib/jenkins/secrets/initialAdminPassword` file with `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
+
+- Enter the temporary password to unlock the Jenkins.
+
+- Install suggested plugins.
+
+- Create first admin user (call-jenkins:Call-jenkins1234).
+
+- Check the URL, then save and finish the installation.
+## Part 3 - Getting familiar with Jenkins Dashboard
 
 - Explain `Jenkins` dashboard.
 
@@ -62,7 +83,7 @@ docker logs jenkins
 
 - Explain other Jenkins terminology.
 
-## Part 3 - Creating First Jenkins Job
+## Part 4 - Creating First Jenkins Job
 
 - We will create a job in Jenkins which picks up a simple "Hello World" bash script and runs it. The freestyle build job is a highly flexible and easy-to-use option. To create a Jenkins freestyle job;
 

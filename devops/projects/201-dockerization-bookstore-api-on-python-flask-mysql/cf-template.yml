@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: |
   CloudFormation Template for Bookstore Web API Application. This template
   creates a RESTful web service with Flask using Dockerfile and Docker Compose on
-  AWS Elastic Compute Cloud (EC2) Instance using AWS Cloudformation Service..
+  AWS Elastic Compute Cloud (EC2) Instance using AWS Cloudformation Service.
 Parameters:
   KeyPairName:
     Description: Enter the name of your Key Pair for SSH connections
