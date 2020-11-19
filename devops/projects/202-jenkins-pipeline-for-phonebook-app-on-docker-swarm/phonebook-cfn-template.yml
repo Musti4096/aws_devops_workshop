@@ -156,7 +156,7 @@ Resources:
         - Key: Name
           Value: !Sub Docker Grand Master of ${AWS::StackName}
         - Key: project
-          Value: "203"
+          Value: "202"
       UserData:
         Fn::Base64: 
           !Sub 
@@ -188,7 +188,7 @@ Resources:
               echo '{"credsStore": "ecr-login"}' > config.json
             - ECR_REGISTRY: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
               APP_REPO_NAME: clarusway-repo/phonebook-app
-              GITHUB_REPO: https://github.com/callahan-cw/project-203.git
+              GITHUB_REPO: https://github.com/Musti4096/aws_devops_workshop.git
 
   DockerManager2:
     Type: "AWS::EC2::Instance"
