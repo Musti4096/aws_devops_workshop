@@ -10,6 +10,8 @@ At the end of this hands-on training, students will be able to;
 - Explain how to provision a web server using Ansible
 - Explain how to provision a database server using Ansible
 
+![ho-04](ho-04.png)
+
 ## Outline
 
 - Part 1 - Build the Infrastructure (3 EC2 Instances with Red Hat Enterprise Linux 8 AMI)

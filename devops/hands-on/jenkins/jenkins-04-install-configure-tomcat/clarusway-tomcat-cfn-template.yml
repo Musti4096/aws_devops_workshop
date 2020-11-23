@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  This Cloudformation Template creates 2 Tomcat Server (Stage and Production) on EC2 Instance. Applicable in N. Virginia(us-east-1).
+
+
+Parameters:
+  KeyPairName:
+    Description: Enter the name of your Key Pair for SSH connections.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must one of the existing EC2 KeyPair
+
+Resources:
+  TomcatServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH and HTTP for Tomcat Server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+  TomcatServerStage:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-09d95fab7fff3776c
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt TomcatServerSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub joe-blue-stage-${AWS::StackName}   
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          yum update -y
+          yum install java-1.8.0-openjdk -y
+          yum install unzip wget -y
+          cd /tmp
+          wget https://downloads.apache.org/tomcat/tomcat-8/v8.5.59/bin/apache-tomcat-8.5.59.zip
+          unzip apache-tomcat-*.zip
+          mv apache-tomcat-8.5.59 /opt/tomcat
+          chmod +x /opt/tomcat/bin/*
+  TomcatServerProduction:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-09d95fab7fff3776c
+      InstanceType: t2.micro
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !GetAtt TomcatServerSecurityGroup.GroupId
+      Tags:                
+        -                        
+          Key: Name
+          Value: !Sub joe-blue-production-${AWS::StackName}   
+      UserData:
+        Fn::Base64: |
+          #! /bin/bash
+          yum update -y
+          yum install java-1.8.0-openjdk -y
+          yum install unzip wget -y
+          cd /tmp
+          wget https://ftp.itu.edu.tr/Mirror/Apache/tomcat/tomcat-8/v8.5.59/bin/apache-tomcat-8.5.59.zip
+          unzip apache-tomcat-*.zip
+          mv apache-tomcat-8.5.59 /opt/tomcat
+          chmod +x /opt/tomcat/bin/*
+Outputs:
+  TomcatServerStage:
+    Description: Tomcat Server Stage DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt TomcatServerStage.PublicDnsName
+  TomcatServerProduction:
+    Description: Tomcat Server Production DNS Name
+    Value: !Sub 
+      - ${PublicAddress}
+      - PublicAddress: !GetAtt TomcatServerProduction.PublicDnsName

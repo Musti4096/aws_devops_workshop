@@ -1,0 +1,17 @@
+- name: db configuration 
+  hosts: db_server
+  vars:
+    ansible_ssh_private_key_file: "/home/ec2-user/mykey.pem"
+  roles: 
+   - tyler-mariadb
+
+- name: web server configuration 
+  hosts: web_server
+  become: yes
+  vars:
+    ansible_ssh_private_key_file: "/home/ec2-user/mykey.pem"
+  roles: 
+   - tyler-apache
+
+
+# You can download the roles from following link: https://galaxy.ansible.com/search?deprecated=false&keywords=tylercounter&order_by=-relevance&page=1
