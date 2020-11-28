@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.7"
 
 services:
   database:
@@ -13,17 +13,17 @@ services:
     networks:
       - clarusnet
     configs:
-      - source: initialdb
+      - source: initialdatabase
         target: /docker-entrypoint-initdb.d/init.sql
 
   app-server:
-    image: "${ECR_REGISTRY}/${APP_REPO_NAME}:latest"
+    image: 046402772087.dkr.ecr.us-east-1.amazonaws.com/clarusway-repo/phonebook-app:latest
     deploy:
-        mode: global
-        update_config:
-          parallelism: 2
-          delay: 5s
-          order: start-first
+      mode: global
+      update_config:
+        parallelism: 2
+        delay: 5s
+        order: start-first
     ports:
       - "80:80"
     networks:
@@ -34,8 +34,8 @@ networks:
     driver: overlay
 
 volumes:
-    db-data:
+  db-data:
 
 configs:
-  initialdb:
-    file: ./init.sql
+  initialdatabase:
+      file: ./init.sql
