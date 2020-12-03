@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: mysql
+  template:
+    metadata:
+      labels:
+        name: mysql
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: mysql
+        ports:
+        - name: db
+          containerPort: 3306
+        volumeMounts:
+          - name: db-storage
+            mountPath: /var/lib/mysql
+        envFrom:
+        - configMapRef:
+            name: configfile
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysecret
+                key: rootpassword
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysecret
+                key: username
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysecret
+                key: password
+          - name: MYSQL_DATABASE
+            value: phonebook
+      volumes:
+        #- name: mongo-storage
+        #  hostPath:
+        #    path: /data/db
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-server
+  labels:
+    name: mysql
+spec:
+  selector:
+    name: mysql
+  type: ClusterIP
+  ports:
+    - name: db
+      port: 3306
+      targetPort: 3306
+
+                      

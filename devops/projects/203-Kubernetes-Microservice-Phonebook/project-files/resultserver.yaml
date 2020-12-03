@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: result-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: result
+  template:
+    metadata:
+      labels:
+        name: result
+    spec:
+      containers: 
+        - image: 40961907/result-server
+          imagePullPolicy: Always
+          name: result-server
+          ports: 
+            - containerPort: 80
+          envFrom:
+          - configMapRef:
+              name: configfile
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: rootpassword
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: password
+            - name: MYSQL_DATABASE
+              value: phonebook
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: result-service
+  labels:
+    name: result
+spec:
+  selector:
+    name: result
+  type: NodePort
+  ports:
+    - name: result
+      port: 80
+      nodePort: 30002
+      targetPort: 80
+
+

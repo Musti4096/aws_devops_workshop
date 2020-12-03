@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: web
+  template:
+    metadata:
+      labels:
+        name: web
+    spec:
+      containers: 
+        - image: 40961907/web-server
+          imagePullPolicy: Always
+          name: web-server
+          ports: 
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: configfile
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: rootpassword
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: password
+            - name: MYSQL_DATABASE
+              value: phonebook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+  labels:
+    name: web
+spec:
+  selector:
+    name: web
+  type: NodePort
+  ports:
+    - name: webserver
+      port: 80
+      nodePort: 30001
+      targetPort: 80
+
+
