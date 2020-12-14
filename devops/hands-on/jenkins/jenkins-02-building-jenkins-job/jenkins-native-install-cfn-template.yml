@@ -13,6 +13,26 @@ Parameters:
     ConstraintDescription: Must one of the existing EC2 KeyPair
 
 Resources:
+  EmpoweringRoleforJenkinsServer:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
+  JenkinsServerEC2Profile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles: #required
+        - !Ref EmpoweringRoleforJenkinsServer
   JenkinsServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -33,19 +53,23 @@ Resources:
   JenkinsServer:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0644c22f90412d908
+      ImageId: ami-0947d2ba12ee1ff75 
       InstanceType: t2.micro
       KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref JenkinsServerEC2Profile
       SecurityGroupIds:
         - !GetAtt JenkinsServerSecurityGroup.GroupId
       Tags:                
         -                        
           Key: Name
-          Value: !Sub joe-blue-native-${AWS::StackName}   
+          Value: !Sub jb-native-${AWS::StackName}   
       UserData:
         Fn::Base64: |
           #! /bin/bash
           yum update -y
+          # set server hostname as jenkins-server
+          hostnamectl set-hostname jenkins-server
+          
           amazon-linux-extras install java-openjdk11 -y
           yum install java-devel -y
           wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
@@ -54,6 +78,42 @@ Resources:
           systemctl start jenkins
           systemctl enable jenkins
           yum install git -y
+
+          cd /opt
+          wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+          tar -zxvf $(ls | grep apache-maven-*-bin.tar.gz)
+          rm -rf $(ls | grep apache-maven-*-bin.tar.gz)
+          ln -s $(ls | grep apache-maven*) maven
+          echo 'export M2_HOME=/opt/maven' > /etc/profile.d/maven.sh
+          echo 'export PATH=${M2_HOME}/bin:${PATH}' >> /etc/profile.d/maven.sh
+          source /etc/profile.d/maven.sh
+          
+          amazon-linux-extras install docker -y
+          systemctl start docker
+          systemctl enable docker
+          usermod -aG docker ec2-user
+          usermod -aG docker jenkins
+          # add bash to jenkins user ---> adds into /etc/passwd file
+          usermod -s /bin/bash jenkins
+          #chown jenkins:docker /var/run/docker.sock
+          systemctl restart  docker
+          systemctl restart jenkins
+          curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" \
+          -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          # uninstall aws cli version 1
+          rm -rf /bin/aws
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+
+          # download and install kubectl
+          curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.8/2020-09-18/bin/linux/amd64/kubectl
+          chmod +x ./kubectl
+          mv ./kubectl /usr/local/bin
+          # download and install eksctl
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/0.31.0-rc.0/eksctl_Linux_amd64.tar.gz" | tar xz -C /tmp
+          mv /tmp/eksctl /usr/local/bin
 
 Outputs:
   JenkinsDNS:

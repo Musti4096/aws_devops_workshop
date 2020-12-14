@@ -404,7 +404,7 @@ spec:
                   name: demo-config
                   key: greeting
 ```
-Note the applicaiton run parameter (`args`) and `ConfigMap` reference in container section.
+Note the application run parameter (`args`) and `ConfigMap` reference in container section.
 
 ## Create and use ConfigMaps with `kubectl create configmap` command
 
@@ -497,7 +497,7 @@ deployment.apps "demo" deleted
 echo "greeting: Hei" > config
 ```
 
-Note that, the comman notation used in key-value pairs is to use `key= value` notation, but this is not an obligatory. The notation actualy depends on the applicaiton implementation that will parse and use these files.
+Note that, the comman notation used in key-value pairs is to use `key= value` notation, but this is not an obligatory. The notation actualy depends on the applicaton implementation that will parse and use these files.
 
 - Look at the other example files that look like below
 

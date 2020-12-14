@@ -6,7 +6,7 @@ Purpose of the this hands-on training is to dockerize an Python Flask applicatio
 
 At the end of the this hands-on training, students will be able to;
 
-- build a Docker images.
+- build Docker images.
 
 - configure Docker Compose to run Python Flask app.
 

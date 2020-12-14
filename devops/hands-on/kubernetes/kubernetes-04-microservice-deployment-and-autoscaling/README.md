@@ -253,7 +253,7 @@ spec:
             - containerPort: 3000
           env:
             - name: "DBHOST"
-              value: "mongodb://db-service:27017"
+              value: db-service
           resources:
             limits:
               cpu: 100m

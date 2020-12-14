@@ -8,6 +8,8 @@ At the end of the this hands-on training, students will be able to;
 
 - configure Jenkins Server on Docker on Amazon Linux 2 EC2 instance using Cloudformation Service.
 
+- integrate Jenkins jobs with Java, Maven and Git.
+
 - integrate Jenkins jobs with GitHub using Webhook.
 
 - build simple Jenkins pipelines.
@@ -26,19 +28,21 @@ At the end of the this hands-on training, students will be able to;
 
 - Part 1 - Installing Jenkins on Docker using Cloudformation Template
 
-- Part 2 - Integrating Jenkins with GitHub using Webhook
+- Part 2 - Install Java, Maven and Git packages
 
-- Part 3 - Creating a Simple Pipeline with Jenkins
+- Part 3 - Integrating Jenkins with GitHub using Webhook
 
-- Part 4 - Creating a Jenkins Pipeline with Jenkinsfile
+- Part 4 - Creating a Simple Pipeline with Jenkins
 
-- Part 5 - Integrating Jenkins Pipeline with GitHub Webhook
+- Part 5 - Creating a Jenkins Pipeline with Jenkinsfile
 
-- Part 6 - Configuring Jenkins Pipeline with GitHub Webhook to Run the Python Code
+- Part 6 - Integrating Jenkins Pipeline with GitHub Webhook
 
-- Part 7 - Configuring Jenkins Pipeline with GitHub Webhook to Build the Java Code
+- Part 7 - Configuring Jenkins Pipeline with GitHub Webhook to Run the Python Code
 
-- Part 8 - Configuring Jenkins Pipeline with GitHub Webhook to Build the a Java Maven Project
+- Part 8 - Configuring Jenkins Pipeline with GitHub Webhook to Build the Java Code
+
+- Part 9 - Configuring Jenkins Pipeline with GitHub Webhook to Build the a Java Maven Project
 
 ## Part 1 - Install Jenkins on Docker using Cloudformation Template
 
@@ -77,8 +81,41 @@ At the end of the this hands-on training, students will be able to;
   - Open your Jenkins dashboard and navigate to `Manage Jenkins` >> `Manage Plugins` >> `Available` tab
 
   - Search and select `GitHub Integration` plugin, then click to `Install without restart`. Note: No need to install the other `Git plugin` which is already installed can be seen under `Installed` tab.
+  
+## Part 2 - Install Java, Maven and Git packages
 
-## Part 2 - Integrating Jenkins with GitHub using Webhook
+- Connect to the Jenkins Server 
+  
+- Install Java
+  
+```bash
+sudo yum update -y
+sudo amazon-linux-extras install java-openjdk11 -y
+sudo yum install java-devel 
+```
+
+- Install Maven
+  
+```bash
+sudo su
+cd /opt
+rm -rf maven
+wget https://ftp.itu.edu.tr/Mirror/Apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar -zxvf $(ls | grep apache-maven-*-bin.tar.gz)
+rm -rf $(ls | grep apache-maven-*-bin.tar.gz)
+sudo ln -s $(ls | grep apache-maven*) maven
+echo 'export M2_HOME=/opt/maven' > /etc/profile.d/maven.sh
+echo 'export PATH=${M2_HOME}/bin:${PATH}' >> /etc/profile.d/maven.sh
+exit
+source /etc/profile.d/maven.sh
+```
+- Install Git
+  
+```bash
+sudo yum install git -y
+```
+
+## Part 3 - Integrating Jenkins with GitHub using Webhook
 
 - Create a public project repository `jenkins-first-project` on your GitHub account.
 
@@ -142,7 +179,7 @@ git push
 
 - Go back to the project page and explain the GitHub Hook log.
 
-## Part 3 - Creating a Simple Pipeline with Jenkins
+## Part 4 - Creating a Simple Pipeline with Jenkins
 
 - Go to the Jenkins dashboard and click on `New Item` to create a pipeline.
 
@@ -178,7 +215,7 @@ pipeline {
 
 - Explain the pipeline script.
 
-## Part 4 - Creating a Jenkins Pipeline with Jenkinsfile
+## Part 5 - Creating a Jenkins Pipeline with Jenkinsfile
 
 - Go to the Jenkins dashboard and click on `New Item` to create a pipeline.
 
@@ -227,7 +264,7 @@ git push
 
 - Explain the role of `Jenkinsfile` and the built results.
 
-## Part 5 - Integrating Jenkins Pipeline with GitHub Webhook
+## Part 6 - Integrating Jenkins Pipeline with GitHub Webhook
 
 - If you haven't done so far, go to the `jenkins-first-project` repository page and create a webhook.
 
@@ -315,7 +352,7 @@ git push
 
 - Explain the role of `Jenkinsfile` and GitHub Webhook in this automation.
 
-## Part 6 - Configuring Jenkins Pipeline with GitHub Webhook to Run the Python Code
+## Part 7 - Configuring Jenkins Pipeline with GitHub Webhook to Run the Python Code
 
 - To build the `python` code with Jenkins pipeline using the `Jenkinsfile` and `GitHub Webhook`, we will leverage from the same job created in ***Part 5*** (named as `pipeline-with-jenkinsfile-and-webhook`). To accomplish this task, we need;
 
@@ -380,7 +417,7 @@ git push
 
 - Explain the role of the docker image of Python, `Jenkinsfile` and GitHub Webhook in this automation.
 
-## Part 7 - Configuring Jenkins Pipeline with GitHub Webhook to Build the Java Code
+## Part 8 - Configuring Jenkins Pipeline with GitHub Webhook to Build the Java Code
 
 - To build the `java` code with Jenkins pipeline using the `Jenkinsfile` and `GitHub Webhook`, we will leverage from the same job created in ***Part 5*** (named as `pipeline-with-jenkinsfile-and-webhook`). To accomplish this task, we need;
 
@@ -439,7 +476,7 @@ git push
 
 - Explain the role of java environment, `Jenkinsfile` and GitHub Webhook in this automation.
 
-## Part 8 - Configuring Jenkins Pipeline with GitHub Webhook to Build the a Java Maven Project
+## Part 9 - Configuring Jenkins Pipeline with GitHub Webhook to Build the a Java Maven Project
 
 - To build the `java` maven project with Jenkins pipeline using the `Jenkinsfile` and `GitHub Webhook`. To accomplish this task, we need;
 

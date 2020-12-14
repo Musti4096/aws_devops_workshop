@@ -77,6 +77,13 @@ docker ps
 docker network inspect bridge | less
 ```
 
+- Get the IP of `clarus1st` container.
+
+```bash
+docker inspect clarus2nd |grep IPAddress
+```
+
+
 - Connect to the `clarus1st` container.
 
 ```bash
