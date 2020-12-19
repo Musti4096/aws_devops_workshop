@@ -1,0 +1,75 @@
+MSP-1:
+------
+* sudo usermod -a -G <group-name> <user-name>
+    |--> -a : append
+    |--> -G : Group
+    |--> use ```$ newgrp docker``` to activate the usermod command...
+    |--> don't forget to put the <group-name>. Because you can delete the user from the groups. 
+
+* sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    |--> -L,--location : if there is redirection on the address, this option will let curl to make the request again.
+    |--> -o, --output <file-name> : this option writes the downloaded file onto the file we gave  
+
+
+MSP-2:
+------
+* git push --set-upstream origin dev == git push -u origin dev
+
+* git remote -v 
+    |--> gives the remote origin address
+
+* git remote rm origin 
+    |--> removes the origin address from local repository. 
+
+* git remote add origin <http-url-address-of-the-repo>
+    |--> adds origin address. If you have used ```$ git clone <http-url-address-of-the-repo>, 
+         you dont need it. But if you have started with ```$ git init``` or if you have removed your origin, you should use it. 
+
+* git checkout -b <branch-name>
+    |--> creates a new branch and then switches to that branch
+
+    
+MSP-3:
+------
+* ./mvnw clean test 
+    |--> cleans the target folders under every module, compiles and then runs the unit tests.
+
+* order of maven default lifecyle phases
+    |--> validate, compile, test, package, integration-test, verify, install, deploy
+
+* ./mvnw clean ---> deletes the target folder
+
+
+MSP-6:
+------
+* -Djava.security.egd=file:/dev/./urandom
+    |--> egd = entropy gathering deamon
+    |--> system property used for not blocking JVM's running...
+
+
+MSP-7:
+------
+* docker build --force-rm -t <image-name:tag> <directory-having-Dockerfile>
+    |--> --force-rm deletes all intermediate containers if a failure occurs during the build
+    |--> --rm is default option used when building and it doesn't delete intermediate containers
+    |--> --rm is used for inspecting the faulty container
+    |--> if there is no fail, all intermediate containers are deleted
+    |--> for inspecting a failed container, you can use "docker inspect <container-name/id>" 
+    or "docker history <container-name/id>" commands
+
+
+MSP-8:
+------
+* docker-compose-local.yml
+    |--> mem_limit is for limiting the container's memory useage
+    |--> depends_on property helps to define a launching order but doesnt gaurantee 
+    the same order when it comes to the container's being fully operational 
+    |--> to be successful on that we use "dockerize (/jwilder/dockerize) binary
+    |--> (tracing-server) environment: --> "JAVA_OPTS=-XX:+UnlockExperimentalVMOptions" is functional if Java8 or Java9
+    is used in the container. It allows mem_limit to take effect on JVM. For Java10 and later, it's not necessary 
+
+* docker container prune
+    |--> removes stopped containers
+
+* docker image prune -a
+    |--> removes all images
